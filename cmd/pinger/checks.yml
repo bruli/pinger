@@ -1,0 +1,42 @@
+---
+  - name: router
+    target: 192.168.1.1
+    interval: 10s
+    timeout: 2s
+    warn_ms: 50
+
+  - name: ap-unifi
+    target: 192.168.1.20
+    interval: 15s
+    timeout: 2s
+    warn_ms: 50
+
+  - name: water-system
+    target: 192.168.1.10
+    interval: 15s
+    timeout: 2s
+    warn_ms: 50
+
+  - name: isp-gateway
+    target: 10.55.0.1
+    interval: 20s
+    timeout: 2s
+    warn_ms: 100
+
+  - name: cloudflare
+    target: 1.1.1.1
+    interval: 30s
+    timeout: 3s
+    warn_ms: 200
+
+  - name: google-dns
+    target: 8.8.8.8
+    interval: 30s
+    timeout: 3s
+    warn_ms: 100
+
+  - name: google-www
+    target: www.google.com
+    interval: 45s
+    timeout: 4s
+    warn_ms: 200
