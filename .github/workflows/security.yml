@@ -1,4 +1,4 @@
-name: Unit tests
+name: Security
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - "go.mod"
       - "go.sum"
       - "Makefile"
-      - ".github/workflows/test.yml"
+      - ".github/workflows/security.yml"
   pull_request:
     branches: [ "**" ]
 
@@ -43,6 +43,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Run tests
+      - name: Security
         run: |
-          make test
+          make security
