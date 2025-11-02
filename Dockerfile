@@ -3,30 +3,29 @@
 ############################
 # Etapa de build ARM64
 ############################
-FROM golang:1.25.3 AS build
+FROM golang:1.25.3 AS builder
 WORKDIR /src
 
 ENV GOPROXY=https://proxy.golang.org,direct
+ARG TARGETARCH
 
 # 1) Deps (capa estable + cache)
 COPY go.mod go.sum ./
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    go mod download
+RUN go mod download
 
 # 2) Codi
 COPY . .
 
 # 3) Build (cache de compilació)
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
-    go build -o /out/pinger ./cmd/pinger
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o /out/pinger ./cmd/pinger
 
-############################
-# Etapa final (distroless)
-############################
-FROM gcr.io/distroless/static:nonroot
-COPY --from=build /out/pinger /pinger
-USER nonroot
-ENTRYPOINT ["/pinger"]
+# --- runtime ---
+FROM alpine:3.20
+# instal·la ping + setcap a la imatge final
+RUN apk add --no-cache iputils libcap
+# copia el teu binari
+COPY --from=builder /out/pinger /usr/local/bin/pinger
+# aplica capabilities al ping de la imatge final
+RUN setcap cap_net_raw+ep "$(command -v ping)" && getcap "$(command -v ping)"
+
+ENTRYPOINT ["/usr/local/bin/pinger"]

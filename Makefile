@@ -1,15 +1,20 @@
 SHELL := /bin/bash
-# ⚙️ Variables bàsiques
+
 APP_NAME   ?= pinger
 IMAGE_REG  ?= ghcr.io/bruli
 IMAGE_NAME := $(IMAGE_REG)/$(APP_NAME)
-VERSION    ?= 0.1.0
-PLATFORM   ?= linux/arm64,linux/amd64
+VERSION    ?= 0.1.1
 DOCKERFILE ?= Dockerfile
-CURRENT_IMAGE := $(IMAGE_NAME):$(VERSION)
-CACHE_DIR   ?= .buildx-cache
+CURRENT_PROD_IMAGE := $(IMAGE_NAME):$(VERSION)
+CURRENT_DEV_IMAGE := $(CURRENT_PROD_IMAGE)-dev
+OS ?= linux
+DEV_ARCH ?= amd64
+PROD_ARCH ?= arm64
+DEV_PLATFORM := $(OS)/$(DEV_ARCH)
+PROD_PLATFORM := $(OS)/$(PROD_ARCH)
 
-.PHONY: fmt lint test check clean help security docker-build-image docker-login
+.PHONY: fmt lint test check clean help security\
+ docker-login  docker-run docker-build-image-dev docker-push-image-prod
 
 .DEFAULT_GOAL := help
 # 🧹 Format de codi
@@ -52,18 +57,35 @@ docker-login:
 	echo "🔐 Logging into Docker registry..."; \
 	echo "$$CR_PAT" | docker login ghcr.io -u bruli --password-stdin
 
-docker-build-image: docker-login
+docker-build-image-dev:
 	@set -euo pipefail; \
-	echo "🐳 Building Docker image $(CURRENT_IMAGE) for ($(PLATFORM))..."; \
-	docker buildx build --platform $(PLATFORM) \
-		-t $(CURRENT_IMAGE) \
-		--cache-to type=registry,ref=$(IMAGE_NAME):buildcache,mode=max \
-        --cache-from type=registry,ref=$(IMAGE_NAME):buildcache \
-		--build-arg TARGETOS=linux \
-		--build-arg TARGETARCH=arm64 \
+	echo "🐳 Building Docker image $(CURRENT_DEV_IMAGE) for (dev)..."; \
+	docker build --platform $(DEV_PLATFORM) \
+		--build-arg TARGETOS=$(OS) \
+		--build-arg TARGETARCH=$(DEV_ARCH) \
+		-t $(CURRENT_DEV_IMAGE) \
+		-f $(DOCKERFILE) \
+		.
+	 echo "✅ Image $(CURRENT_DEV_IMAGE) created successfully."
+
+docker-push-image-prod: docker-login
+	@set -euo pipefail; \
+	echo "🐳 Building and pushing Docker image $(CURRENT_PROD_IMAGE) for (prod)..."; \
+	docker buildx build --platform $(PROD_PLATFORM) \
+		--build-arg TARGETOS=$(OS) \
+		--build-arg TARGETARCH=$(PROD_ARCH) \
+		-t $(CURRENT_PROD_IMAGE) \
+		-f $(DOCKERFILE) \
+		--load \
 		--push \
-	    .
-	 echo "✅ Image $(CURRENT_IMAGE) pushed successfully."
+		.
+	 echo "✅ Image $(CURRENT_PROD_IMAGE) pushed successfully."
+
+docker-run: docker-build-image-dev
+	@set -euo pipefail; \
+    echo "🐳 Running Docker image $(CURRENT_DEV_IMAGE) ..."; \
+    docker run --rm -it $(CURRENT_DEV_IMAGE)
+
 
 # 🪄 Ajuda
 help:

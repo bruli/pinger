@@ -6,7 +6,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-const Port = ":8081"
+const Port = ":8080"
 
 func NewServer(log *zerolog.Logger) *http.Server {
 	mux := http.NewServeMux()

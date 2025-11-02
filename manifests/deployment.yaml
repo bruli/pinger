@@ -15,11 +15,11 @@ spec:
     spec:
       containers:
         - name: pinger
-          image: ghcr.io/bruli/pinger:0.1.0
+          image: ghcr.io/bruli/pinger:0.1.1
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
-              containerPort: 8081
+              containerPort: 8080
           env:
             - { name: TZ, value: Europe/Madrid }
           readinessProbe:
