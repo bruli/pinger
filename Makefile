@@ -9,7 +9,7 @@ DOCKERFILE ?= Dockerfile
 CURRENT_IMAGE := $(IMAGE_NAME):$(VERSION)
 CACHE_DIR   ?= .buildx-cache
 
-.PHONY: fmt lint test check clean help security docker-build-image
+.PHONY: fmt lint test check clean help security docker-build-image docker-login
 
 .DEFAULT_GOAL := help
 # 🧹 Format de codi
@@ -47,17 +47,23 @@ security:
 	echo "👉 Check security"; \
 	go tool govulncheck ./...
 
-docker-build-image:
+docker-login:
+	@set -euo pipefail; \
+	echo "🔐 Logging into Docker registry..."; \
+	echo "$$CR_PAT" | docker login ghcr.io -u bruli --password-stdin
+
+docker-build-image: docker-login
 	@set -euo pipefail; \
 	echo "🐳 Building Docker image $(CURRENT_IMAGE) for ($(PLATFORM))..."; \
 	docker buildx build --platform $(PLATFORM) \
-		--cache-from type=local,src=$(CACHE_DIR) \
-        --cache-to type=local,dest=$(CACHE_DIR),mode=max \
+		-t $(CURRENT_IMAGE) \
+		--cache-to type=registry,ref=$(IMAGE_NAME):buildcache,mode=max \
+        --cache-from type=registry,ref=$(IMAGE_NAME):buildcache \
 		--build-arg TARGETOS=linux \
 		--build-arg TARGETARCH=arm64 \
-		-t $(CURRENT_IMAGE) \
-		-f $(DOCKERFILE) \
-		.
+		--push \
+	    .
+	 echo "✅ Image $(CURRENT_IMAGE) pushed successfully."
 
 # 🪄 Ajuda
 help:
