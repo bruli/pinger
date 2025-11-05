@@ -20,7 +20,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o /out/pinger ./cmd/pinger
 
 # --- runtime ---
-FROM alpine:3.20
+FROM alpine:3.22
 # instal·la ping + setcap a la imatge final
 RUN apk add --no-cache iputils libcap
 # copia el teu binari
