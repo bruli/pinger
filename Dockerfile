@@ -3,7 +3,7 @@
 ############################
 # Etapa de build ARM64
 ############################
-FROM golang:1.25.3 AS builder
+FROM golang:1.25.4 AS builder
 WORKDIR /src
 
 ENV GOPROXY=https://proxy.golang.org,direct
