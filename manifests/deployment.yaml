@@ -15,13 +15,15 @@ spec:
     spec:
       containers:
         - name: pinger
-          image: ghcr.io/bruli/pinger:0.1.1
+          image: ghcr.io/bruli/pinger:0.2.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 8080
           env:
             - { name: TZ, value: Europe/Madrid }
+            - name: NATS_SERVER_URL
+              value: nats://nats.nats.svc.cluster.local:4222
           readinessProbe:
             httpGet: { path: /healthz, port: http }
             initialDelaySeconds: 3

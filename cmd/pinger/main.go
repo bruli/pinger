@@ -10,9 +10,12 @@ import (
 	"time"
 
 	"github.com/bruli/pinger/internal/app"
+	"github.com/bruli/pinger/internal/config"
 	"github.com/bruli/pinger/internal/domain"
 	infrahttp "github.com/bruli/pinger/internal/infra/http"
 	"github.com/bruli/pinger/internal/infra/icmp"
+	"github.com/bruli/pinger/internal/infra/listeners"
+	"github.com/bruli/pinger/internal/infra/nats"
 	"github.com/bruli/pinger/internal/infra/yaml"
 	"github.com/rs/zerolog"
 )
@@ -45,14 +48,34 @@ func shutDown(ctx context.Context, log *zerolog.Logger, srv *http.Server) {
 
 func runWorkers(ctx context.Context) *zerolog.Logger {
 	log := buildLogger()
+	conf, err := config.New()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to load configuration")
+		os.Exit(1)
+	}
 	repo := yaml.NewPingsRepository(checks)
 	exec := icmp.NewPingExecutor()
+	publish, err := nats.NewPublisher(conf.NatsServerURL)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error creating nats publisher")
+		os.Exit(1)
+	}
+	defer publish.Close()
+
+	publishListener := listeners.NewPublishOnPingResult(publish)
+
+	evBus := app.NewEventBus()
+	evBus.Subscribe(domain.PingEvent{
+		BasicEvent: &domain.BasicEvent{Name: domain.PingResultEventName},
+	}, publishListener)
 
 	chLogMdw := app.NewLogCommandHandlerMiddleware(log)
+	chBusMdw := app.NewEventBusCommandHandlerMiddleware(evBus, log)
+	chMultiMdw := app.NewCommandHandlerMultiMiddleware(chBusMdw, chLogMdw)
 	qhLogMds := app.NewLogQueryHandlerMiddleware(log)
 
 	findQh := qhLogMds(app.NewFindPings(repo))
-	execCh := chLogMdw(app.NewExecutePings(exec))
+	execCh := chMultiMdw(app.NewExecutePings(exec))
 
 	result, err := findQh.Handle(ctx, app.FindPingsQuery{})
 	if err != nil {
