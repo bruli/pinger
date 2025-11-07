@@ -36,6 +36,9 @@ test:
 	echo "🚀 Executing tests with cover...";
 	go test -race ./... -json -cover | go tool tparse -all
 
+security:
+	echo "👉 Check security"; \
+	go tool govulncheck ./...
 
 # 🧩 Tot en una passada
 check: fmt lint security test
@@ -64,7 +67,7 @@ docker-build-image-dev:
 
 docker-push-image-prod: docker-login
 	echo "🐳 Building and pushing Docker image $(CURRENT_PROD_IMAGE) for (prod)...";
-	docker buildx build --platform $(PROD_PLATFORM) \
+	docker buildx build \
 		--build-arg TARGETOS=$(OS) \
 		--build-arg TARGETARCH=$(PROD_ARCH) \
 		-t $(CURRENT_PROD_IMAGE) \
