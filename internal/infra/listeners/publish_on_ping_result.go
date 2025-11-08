@@ -2,10 +2,12 @@ package listeners
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/bruli/pinger/internal/domain"
 	"github.com/bruli/pinger/internal/infra/nats"
+	"github.com/bruli/pinger/pkg/events"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type PublishOnPingResult struct {
@@ -14,7 +16,13 @@ type PublishOnPingResult struct {
 
 func (p PublishOnPingResult) Listen(ctx context.Context, ev domain.Event) error {
 	ping := ev.(domain.PingEvent)
-	data, err := json.Marshal(&ping)
+	event := events.PingResult{
+		Resource:  ping.AggregateRootID(),
+		Status:    ping.Status,
+		Latency:   float32(ping.Latency),
+		CreatedAt: timestamppb.New(ping.CreatedAt()),
+	}
+	data, err := proto.Marshal(&event)
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package events;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/bruli/pinger/internal/proto/events;events";
+
+message PingResult {
+  string resource = 1;
+  string status = 2;
+  float latency = 3;
+  google.protobuf.Timestamp createdAt = 4;
+}

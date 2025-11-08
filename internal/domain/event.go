@@ -14,10 +14,10 @@ type Event interface {
 }
 
 type BasicEvent struct {
-	ID                  uuid.UUID `json:"id"`
-	Name                string    `json:"resourceName"`
-	At                  time.Time `json:"created_at"`
-	AggregateRootIDAttr string    `json:"aggregate_root_id"`
+	ID                  uuid.UUID
+	Name                string
+	At                  time.Time
+	AggregateRootIDAttr string
 }
 
 func (b BasicEvent) EventID() uuid.UUID {
@@ -42,6 +42,6 @@ func NewBasicEvent(ID uuid.UUID, eventName string, aggregateRootIDAttr string) *
 
 type PingEvent struct {
 	*BasicEvent
-	Status  string  `json:"status"`
-	Latency float64 `json:"latency"`
+	Status  string
+	Latency float64
 }
