@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: pinger
-          image: ghcr.io/bruli/pinger:0.2.0
+          image: ghcr.io/bruli/pinger:0.3.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
