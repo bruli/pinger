@@ -3,10 +3,9 @@ package nats
 import (
 	"context"
 
+	"github.com/bruli/pinger/pkg/events"
 	"github.com/nats-io/nats.go"
 )
-
-const PingSubjet = "ping.created"
 
 type Publisher struct {
 	conn *nats.Conn
@@ -21,7 +20,7 @@ func (p Publisher) Publish(ctx context.Context, data []byte) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		return p.conn.Publish(PingSubjet, data)
+		return p.conn.Publish(events.PingSubjet, data)
 	}
 }
 

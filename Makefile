@@ -4,7 +4,7 @@ SHELL := /usr/bin/env bash
 APP_NAME   ?= pinger
 IMAGE_REG  ?= ghcr.io/bruli
 IMAGE_NAME := $(IMAGE_REG)/$(APP_NAME)
-VERSION    ?= 0.3.0
+VERSION    ?= 0.4.0
 DOCKERFILE ?= Dockerfile
 
 CURRENT_PROD_IMAGE := $(IMAGE_NAME):$(VERSION)
