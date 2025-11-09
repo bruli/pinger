@@ -34,7 +34,7 @@ lint:
 # 🧪 Tests amb cobertura i sortida formatejada
 test:
 	echo "🚀 Executing tests with cover...";
-	go test -race ./... -json -cover | go tool tparse -all
+	go test -race ./... -json -cover -coverprofile=coverage.out| go tool tparse -all
 
 security:
 	echo "👉 Check security"; \
