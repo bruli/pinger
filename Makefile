@@ -4,7 +4,7 @@ SHELL := /usr/bin/env bash
 APP_NAME   ?= pinger
 IMAGE_REG  ?= ghcr.io/bruli
 IMAGE_NAME := $(IMAGE_REG)/$(APP_NAME)
-VERSION    ?= 0.5.0
+VERSION    ?= 0.5.1
 DOCKERFILE ?= Dockerfile
 
 CURRENT_PROD_IMAGE := $(IMAGE_NAME):$(VERSION)
@@ -77,11 +77,9 @@ docker-build-image-dev:
 docker-push-image-prod: docker-login
 	echo "🐳 Building and pushing Docker image $(CURRENT_PROD_IMAGE) for (prod)...";
 	docker buildx build \
-		--build-arg TARGETOS=$(OS) \
-		--build-arg TARGETARCH=$(PROD_ARCH) \
+		--platform $(PROD_PLATFORM) \
 		-t $(CURRENT_PROD_IMAGE) \
 		-f $(DOCKERFILE) \
-		--load \
 		--push \
 		.
 	 echo "✅ Image $(CURRENT_PROD_IMAGE) pushed successfully."
