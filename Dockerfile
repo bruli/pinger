@@ -3,7 +3,7 @@
 ############################
 # Etapa de build ARM64
 ############################
-FROM golang:1.25.4 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.1 AS builder
 WORKDIR /src
 
 ENV GOPROXY=https://proxy.golang.org,direct
@@ -11,13 +11,15 @@ ARG TARGETARCH
 
 # 1) Deps (capa estable + cache)
 COPY go.mod go.sum ./
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 # 2) Codi
 COPY . .
 
 # 3) Build (cache de compilació)
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o /out/pinger ./cmd/pinger
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o /out/pinger ./cmd/pinger
 
 # --- runtime ---
 FROM alpine:3.22

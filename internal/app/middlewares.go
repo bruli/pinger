@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/bruli/pinger/internal/domain"
-	"github.com/rs/zerolog"
 )
 
 type (
@@ -25,19 +25,19 @@ func (c QueryHandlerFunc) Handle(ctx context.Context, query Query) (any, error) 
 	return c(ctx, query)
 }
 
-func NewLogCommandHandlerMiddleware(log *zerolog.Logger) CommandHandlerMiddleware {
+func NewLogCommandHandlerMiddleware(log *slog.Logger) CommandHandlerMiddleware {
 	return func(h CommandHandler) CommandHandler {
 		return CommandHandlerFunc(func(ctx context.Context, cmd Command) ([]domain.Event, error) {
 			events, err := h.Handle(ctx, cmd)
 			if err != nil {
-				log.Err(err).Msgf("failed to handle command %q", cmd.Name())
+				log.ErrorContext(ctx, "failed to handle command", slog.String("command", cmd.Name()))
 			}
 			return events, err
 		})
 	}
 }
 
-func NewEventBusCommandHandlerMiddleware(bus EventBus, log *zerolog.Logger) CommandHandlerMiddleware {
+func NewEventBusCommandHandlerMiddleware(bus EventBus, log *slog.Logger) CommandHandlerMiddleware {
 	return func(h CommandHandler) CommandHandler {
 		return CommandHandlerFunc(func(ctx context.Context, cmd Command) ([]domain.Event, error) {
 			events, err := h.Handle(ctx, cmd)
@@ -51,7 +51,10 @@ func NewEventBusCommandHandlerMiddleware(bus EventBus, log *zerolog.Logger) Comm
 			}
 			if len(errs) > 0 {
 				err = errors.Join(errs...)
-				log.Err(err).Msg("failed to dispatch events")
+				log.ErrorContext(ctx, "failed to dispatch events",
+					slog.String("command", cmd.Name()),
+					slog.String("error", err.Error()),
+				)
 			}
 
 			return events, err
@@ -59,12 +62,15 @@ func NewEventBusCommandHandlerMiddleware(bus EventBus, log *zerolog.Logger) Comm
 	}
 }
 
-func NewLogQueryHandlerMiddleware(logger *zerolog.Logger) QueryHandlerMiddleware {
+func NewLogQueryHandlerMiddleware(logger *slog.Logger) QueryHandlerMiddleware {
 	return func(h QueryHandler) QueryHandler {
 		return QueryHandlerFunc(func(ctx context.Context, query Query) (any, error) {
 			result, err := h.Handle(ctx, query)
 			if err != nil {
-				logger.Error().Err(err).Msg("error handling query")
+				logger.ErrorContext(ctx, "failed to handle query",
+					slog.String("query", query.Name()),
+					slog.String("error", err.Error()),
+				)
 			}
 			return result, err
 		})

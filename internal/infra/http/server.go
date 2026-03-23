@@ -1,14 +1,14 @@
 package http
 
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
-
-	"github.com/rs/zerolog"
 )
 
 const Port = ":8080"
 
-func NewServer(log *zerolog.Logger) *http.Server {
+func NewServer(log *slog.Logger) *http.Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -26,10 +26,10 @@ func NewServer(log *zerolog.Logger) *http.Server {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-func LogMiddleware(log *zerolog.Logger) MiddlewareFunc {
+func LogMiddleware(log *slog.Logger) MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Info().Msgf("request: %s %s", r.Method, r.URL.Path)
+			log.InfoContext(r.Context(), fmt.Sprintf("request: %s %s", r.Method, r.URL.Path))
 			next.ServeHTTP(w, r)
 		})
 	}
